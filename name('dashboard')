@@ -1,0 +1,43 @@
+
+   ErrorException 
+
+  file_put_contents(C:\xampp\htdocs\myjob\app/Http/Controllers/Route::get('/dashboard',[DashboardController::class,'dashboard'])-;.php): Failed to open stream: No such file or directory
+
+  at C:\xampp\htdocs\myjob\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php:190
+    186▕      * @return int|bool
+    187▕      */
+    188▕     public function put($path, $contents, $lock = false)
+    189▕     {
+  ➜ 190▕         return file_put_contents($path, $contents, $lock ? LOCK_EX : 0);
+    191▕     }
+    192▕ 
+    193▕     /**
+    194▕      * Write the contents of a file, replacing it atomically if it already exists.
+
+  1   C:\xampp\htdocs\myjob\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php:190
+      file_put_contents("C:\xampp\htdocs\myjob\app/Http/Controllers/Route::get('/dashboard',[DashboardController::class,'dashboard'])-;.php", "<?php
+
+namespace App\Http\Controllers\Route::get(';
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+
+class dashboard',[DashboardController::class,'dashboard'])-; extends Controller
+{
+    //
+}
+")
+
+  2   C:\xampp\htdocs\myjob\vendor\laravel\framework\src\Illuminate\Console\GeneratorCommand.php:180
+      Illuminate\Filesystem\Filesystem::put("C:\xampp\htdocs\myjob\app/Http/Controllers/Route::get('/dashboard',[DashboardController::class,'dashboard'])-;.php", "<?php
+
+namespace App\Http\Controllers\Route::get(';
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+
+class dashboard',[DashboardController::class,'dashboard'])-; extends Controller
+{
+    //
+}
+")
