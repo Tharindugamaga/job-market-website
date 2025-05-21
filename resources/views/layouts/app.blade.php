@@ -19,7 +19,7 @@
     <div class="collapse navbar-collapse" id="navb  arNav">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#">Homeee</a>
+          <a class="nav-link active" aria-current="page" href="#">Home</a>
         </li>
              @if(!Auth::check())
         <li class="nav-item">
@@ -31,7 +31,7 @@
           <a class="nav-link" href="{{ route('create.Seeker') }}">Job Seeker</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link ">Employer</a>
+          <a class="nav-link " href="{{ route('create.employer') }}">Employer</a>
         </li>
         @endif
         @if(Auth::check())
