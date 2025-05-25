@@ -6,8 +6,13 @@
         <div class="card">
             <div class="card-header">Verify Account</div>
                 <div class="card-body">
-                    <p>Your account is not verified.please verify your account</p>
+                    <p>Your account is not verified.please verify your account
+
+                    <a href="{{ route('resend.email') }}" class="btn btn-danger">Resend verification email</a>
+
+                    </p>
                 
+
             </div>
         </div>
     </div>

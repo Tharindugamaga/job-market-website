@@ -46,10 +46,16 @@ class UserController extends Controller
                 'user_type' => self::JOB_SEEKER,
 
             ]);
+            Auth::login($user);
+
 
             $user->sendEmailVerificationNotification(); // Send verification email 
 
-            return redirect()->route('login')->with('successMessage', 'Registration successful! You can now log in.'); // Redirect to login with success message
+          
+              return response()->json('success');
+
+
+             //return redirect()->route('verification.notice')->with('successMessage', 'Registration successful! You can now log in.'); // Redirect to login with success message
          
     }public function storeEmployer(RegistrationFormRequest $request)
     {
@@ -71,9 +77,13 @@ class UserController extends Controller
 
             ]);
 
+            Auth::login($user); // Log in the user
+
             $user->sendEmailVerificationNotification(); // Send verification email
 
-            return redirect()->route('login')->with('successMessage', 'Registration successful! You can now log in.'); // Redirect to login with success message
+              return response()->json('success');
+
+            // return redirect()->route('verification.notice')->with('successMessage', 'Registration successful! You can now log in.'); // Redirect to login with success message
          
     }
 
