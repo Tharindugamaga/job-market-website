@@ -9,6 +9,8 @@ use Stripe\Checkout\Session;
 use Stripe\Stripe;
 use Illuminate\Support\Facades\URL;
 use App\Models\User;
+use App\Mail\PurchaseMail;
+use Illuminate\Support\Facades\Mail;
 
 class SubscriptionController extends Controller
 {
@@ -21,10 +23,11 @@ class SubscriptionController extends Controller
 
     public function __construct()
     {
-        $this->middleware(['auth', isEmployer::class,donotAllowUserToMakePayment::class]);
+        $this->middleware(['auth', isEmployer::class]);
+         $this->middleware(['auth', donotAllowUserToMakePayment::class])->except('subscribe');
+
     }
-
-
+ 
 
     public function subscribe()
     {
@@ -32,78 +35,77 @@ class SubscriptionController extends Controller
         return view('subscription.index');
     }
 
- public function initiatePayment(Request $request)
-{
-    $plans = [
-        'weekly' => [
-            'name' => 'Weekly',
-            'description' => 'Weekly subscription plan',
-            'amount' => self::WEEKLY_AMOUNT,
-            'currency' => self::CURRENCY,
-            'quantity' => 1,
-        ],
-        'monthly' => [
-            'name' => 'Monthly',
-            'description' => 'Monthly subscription plan',
-            'amount' => self::MONTHLY_AMOUNT,
-            'currency' => self::CURRENCY,
-            'quantity' => 1,
-        ],
-        'yearly' => [
-            'name' => 'Yearly',
-            'description' => 'Yearly subscription plan',
-            'amount' => self::YEARLY_AMOUNT,
-            'currency' => self::CURRENCY,
-            'quantity' => 1,
-        ]
-    ];
+    public function initiatePayment(Request $request)
+    {
+        $plans = [
+            'weekly' => [
+                'name' => 'Weekly',
+                'description' => 'Weekly subscription plan',
+                'amount' => self::WEEKLY_AMOUNT,
+                'currency' => self::CURRENCY,
+                'quantity' => 1,
+            ],
+            'monthly' => [
+                'name' => 'Monthly',
+                'description' => 'Monthly subscription plan',
+                'amount' => self::MONTHLY_AMOUNT,
+                'currency' => self::CURRENCY,
+                'quantity' => 1,
+            ],
+            'yearly' => [
+                'name' => 'Yearly',
+                'description' => 'Yearly subscription plan',
+                'amount' => self::YEARLY_AMOUNT,
+                'currency' => self::CURRENCY,
+                'quantity' => 1,
+            ]
+        ];
 
-    Stripe::setApiKey(config('services.stripe.secret'));
+        Stripe::setApiKey(config('services.stripe.secret'));
 
-    try {
-        $selectedPlan = null;
-        $billingEnd = null;
+        try {
+            $selectedPlan = null;
+            $billingEnd = null;
 
-        if ($request->is('pay/weekly')) {
-            $selectedPlan = $plans['weekly'];
-            $billingEnd = now()->addWeek()->startOfDay()->toDateString();
-        } elseif ($request->is('pay/monthly')) {
-            $selectedPlan = $plans['monthly'];
-            $billingEnd = now()->addMonth()->startOfDay()->toDateString();
-        } elseif ($request->is('pay/yearly')) {
-            $selectedPlan = $plans['yearly'];
-            $billingEnd = now()->addYear()->startOfDay()->toDateString();
-        }
+            if ($request->is('pay/weekly')) {
+                $selectedPlan = $plans['weekly'];
+                $billingEnd = now()->addWeek()->startOfDay()->toDateString();
+            } elseif ($request->is('pay/monthly')) {
+                $selectedPlan = $plans['monthly'];
+                $billingEnd = now()->addMonth()->startOfDay()->toDateString();
+            } elseif ($request->is('pay/yearly')) {
+                $selectedPlan = $plans['yearly'];
+                $billingEnd = now()->addYear()->startOfDay()->toDateString();
+            }
 
-        if ($selectedPlan) {
-            $successURL = URL::signedRoute('payment.success', [
-                'plan' => $selectedPlan['name'],
-                'billing_end' => $billingEnd,
-            ]);
-            $session = Session::create([
-                'payment_method_types' => ['card'],
-                'line_items' => [[
-                    'price_data' => [
-                        'currency' => $selectedPlan['currency'],
-                        'unit_amount' => $selectedPlan['amount'] * 100, // Stripe uses cents
-                        'product_data' => [
-                            'name' => $selectedPlan['name'],
-                            'description' => $selectedPlan['description'],
+            if ($selectedPlan) {
+                $successURL = URL::signedRoute('payment.success', [
+                    'plan' => $selectedPlan['name'],
+                    'billing_end' => $billingEnd,
+                ]);
+                $session = Session::create([
+                    'payment_method_types' => ['card'],
+                    'line_items' => [[
+                        'price_data' => [
+                            'currency' => $selectedPlan['currency'],
+                            'unit_amount' => $selectedPlan['amount'] * 100, // Stripe uses cents
+                            'product_data' => [
+                                'name' => $selectedPlan['name'],
+                                'description' => $selectedPlan['description'],
+                            ],
                         ],
-                    ],
-                    'quantity' => $selectedPlan['quantity'],
-                ]],
-                'mode' => 'payment',
-                'success_url' => $successURL,
-                'cancel_url' => route('payment.cancel'),
-            ]);
-             return redirect ( $session->url);
-         }
-
-    } catch (\Exception $e) {
-        return response()->json($e) ;
+                        'quantity' => $selectedPlan['quantity'],
+                    ]],
+                    'mode' => 'payment',
+                    'success_url' => $successURL,
+                    'cancel_url' => route('payment.cancel'),
+                ]);
+                return redirect($session->url);
+            }
+        } catch (\Exception $e) {
+            return response()->json($e);
+        }
     }
-}
 
 
 
@@ -116,6 +118,14 @@ class SubscriptionController extends Controller
             'billing_ends' => $billingEnd,
             'status' => 'paid',
         ]);
+
+        try {
+            Mail::to(auth()->user())->queue(new PurchaseMail($plan, $billingEnd));
+        } catch (\Exception $e) {
+            return response()->json($e);
+        }
+
+
 
         return redirect()->route('dashboard')->with('success', 'Payment was successfully processed .');
     }

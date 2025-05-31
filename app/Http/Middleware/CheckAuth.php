@@ -4,8 +4,9 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
-class isPremiumUser
+class CheckAuth
 {
     /**
      * Handle an incoming request.
@@ -14,16 +15,12 @@ class isPremiumUser
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next)
-{
-    $user = $request->user();
+    public function handle(Request $request, Closure $next):Response
+    {
+        if(!auth()->check()){
+            return $next($request);
+        }
+        return redirect()->to('/');
 
-    if ($user && ($user->user_trail > date('Y-m-d') || $user->billing_ends > date('Y-m-d'))) {
-        return $next($request);
     }
-
-    return redirect()->route('subscribe')->with('message', 'You are not a premium user, please subscribe to access this feature');
 }
-
-}
- 

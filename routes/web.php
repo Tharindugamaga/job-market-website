@@ -7,7 +7,11 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Middleware\isEmployer;
 use App\Http\Controllers\PostJobController;
+
+use App\Http\Controllers\ApplicantController;
 use App\Http\Middleware\isPremiumUser;
+use App\Http\Middleware\CheckAuth;
+use Illuminate\Console\Application;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,7 +25,7 @@ use App\Http\Middleware\isPremiumUser;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('home');
 });
 
 
@@ -36,19 +40,24 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
 
 
 
-Route::get('/register/seeker', [UserController::class, 'createSeeker'])->name('create.Seeker');
+Route::get('/register/seeker', [UserController::class, 'createSeeker'])->name('create.Seeker')->middleware(CheckAuth::class);
 Route::post('/register/seeker', [UserController::class, 'storeSeeker'])->name('store.Seeker');
-Route::get('/register/employer', [UserController::class, 'createEmployer'])->name('create.employer');
+Route::get('/register/employer', [UserController::class, 'createEmployer'])->name('create.employer')->middleware(CheckAuth::class);
 Route::post('/register/employer', [UserController::class, 'storeEmployer'])->name('store.employer');
 
 
-Route::get('login', [UserController::class, 'login'])->name('login');
+Route::get('login', [UserController::class, 'login'])->name('login')->middleware(CheckAuth::class);
 Route::post('login', [UserController::class, 'postLogin'])->name('login.post');
 
 Route::post('logout', [UserController::class, 'logout'])->name('logout');
 
+Route::get('user/profile',[UserController::class,'profile'])->name('user.profile')->middleware('auth');
+Route::post('user/profile',[UserController::class,'update'])->name('user.update.profile')->middleware('auth');
+Route::get('user/profile/seeker',[UserController::class,'seekerProfile'])->name('seeker.profile')->middleware('auth');
+Route::post('user/password',[UserController::class,'changePassword'])->name('user.password')->middleware('auth');
+Route::post('upload/resume',[UserController::class,'uploadResume'])->name('upload.resume')->middleware('auth');
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('verified')->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('verified',isPremiumUser::class)->name('dashboard');
 
 Route::get('/verify', [DashboardController::class, 'verify'])->name('verification.notice');
 
@@ -63,6 +72,12 @@ Route::get('/payment/success',[SubscriptionController::class,'paymentSuccess'])-
 Route::get('/payment/cancel',[SubscriptionController::class,'cancel'])->name('payment.cancel');
 
 
-Route::get('/job/create',[PostJobController::class,'create'])->name('job.cancel')->middleware(isPremiumUser::class);
+Route::get('/job/create',[PostJobController::class,'create'])->name('job.create');
+Route::post('/job/store',[PostJobController::class,'store'])->name('job.store');
+Route::get('/job/{listing}/edit',[PostJobController::class,'edit'])->name('job.edit');
+Route::put('/job/{id}/edit',[PostJobController::class,'update'])->name('job.update');
+Route::get('/job',[PostJobController::class,'index'])->name('job.index');
+Route::delete('/job/{id}/delete',[PostJobController::class,'destroy'])->name('job.delete');
 
 
+Route::get('applicants',[ApplicantController::class,'index'])->name('applicants.index');
