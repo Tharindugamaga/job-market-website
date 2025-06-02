@@ -183,4 +183,13 @@ public function uploadResume(Request $request)
 
         return back()->with('success', 'Profile updated successfully');
     }
+
+
+    public function jobApplied ()
+    {
+         $users = User::with('listings')->where('id',auth()->user()->id)->get();
+    
+         return view('seeker.job-applied',compact('users'));
+    
+        }
 };
